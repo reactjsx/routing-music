@@ -76,9 +76,9 @@ Overall, TF-Slim may be a good option for fast experimenting new idea (Tensorflo
 
 6. tf.keras
 
-This is legend! Keras came out when we had to write everything using low-level API. So technically it was used as the high-level API for Tensorflow. In my opinion, it did help make the community (especially researchers) adopt Tensorflow. And since Keras is officially a package of Tensorflow (from version 1.0 I think), you don't have to worry about version compatibility any more.
+This is legend! Keras came out when we had to write everything using low-level API. So technically it was used as the high-level API for Tensorflow. In my opinion, it did help make the community (especially researchers) adopt Tensorflow. And since Keras is officially a module of Tensorflow (from version 1.0 I think), you don't have to worry about version compatibility any more.
 
-The great thing about Keras is, it does all the hard tasks for you. So implementing from idea to actual result is just a piece of cake. Want to create a network? Just stack up the layers! Want to train it? Just compile and fit!
+The great thing about Keras is, it does all the hard tasks for you. So going from idea to result is just a piece of cake. Want to create a network? Just stack up the layers! Want to train it? Just compile and call fit!
 
 ```Python
 model = Sequential()
@@ -93,8 +93,24 @@ model.compile(loss='categorical_crossentropy', optimizer=SGD())
 model.fit(x=inputs, y=labels)
 ```
 
-7. tf.estimator
+Although Keras is super convenient, especially for those who don't like to write code, it abstracts so many things from us. François Chollet, the author of Keras, claimed that Keras will act like an interface only, but it does have some constraints which may confuse you sometimes (Want model.fit to compute validation loss after a specific number of batches? It can't!). You may also have hard time implementing newly introduced deep-learning papers entirely by Keras since they require some minor tweaks within some layer.
 
-8. tf.eager
+7. Eager Execution
 
-9.  Tensorflow.js
+As I mentioned earlier, when implementing in Tensorflow, you must first define all the operations to form a graph. It's not until the graph is finalized (it's locked, no more in, no more out, no more update) that you can run it to see the results. Because of this, Tensorflow is hard to debug and incapable of creating dynamic graph.
+
+So Eager Execution came out to help deal with these problems. The name is kind of weird though. I interprete it as "can't wait to execute". With the additional 2 new lines, you can now do something like: evaluate the new created variable (which is trivial but used to be impossible in Tensorflow):
+
+```Python
+> tf.enable_eager_execution()
+> tf.executing_eagerly()
+> import tensorflow.contrib.eager as tfe
+
+> weights = tfe.Variable(tf.truncated_normal(shape=[2, 3], stddev=5e-2), name='weights')
+> weights
+<tf.Variable 'weights:0' shape=(2, 3) dtype=float32, numpy=
+array([[ 0.06691323, -0.01890625, -0.00283119],
+       [-0.0536754 ,  0.00109388, -0.04310168]], dtype=float32)>
+```
+
+Rumor has it Eager Execution is gonna be default from Tensorflow 2.0. I think this move will please a lot of Tensorflow fans out there. But please bear in mind that at the moment, not everything is gonna work in Eager Execution mode (yet). So while we're waiting for Tensorflow 2.0 to be released, it's a good idea to stay updated to the latest news from Tensorflow's team and Google.
