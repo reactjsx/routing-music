@@ -25,13 +25,17 @@ Below, I'm gonna list out some "concepts" that are mostly confusing to beginners
 
 1. Low-level API
 
-It used to be how we did everything in Tensorflow when it first came out. Want to create a fully connected layer? Create some weights, some biases and add them up!
+It used to be how we did everything in Tensorflow when it first came out. Want to create a fully connected layer? Create some weights, some biases and roll them in!
 
 ```Python
 with tf.variable_scopes('fc_layer'):
-  weights = tf.get_variables(tf.float32, [in_size, out_size], 'weights')
-  biases = tf.get_variables(tf.float32, [out_size], 'biases')
-  output = tf.matmul(inputs, weights) + biases
+  weights = tf.get_variables('weights', [5, 5, 3, 64],
+                             initializer=tf.truncated_normal_initializer(stddev=5e-2))
+  biases = tf.get_variables('biases', [64],
+                            initializer=tf.zeros_initializer)
+  output = tf.nn.conv2d(inputs, weights, [1, 1, 1, 1], padding='SAME')
+  output = tf.nn.bias_add(conv, biases)
+  output = tf.nn.relu(output)
 ```
 
 2. tf.contrib
@@ -40,13 +44,37 @@ You are likely to come across tf.contrib.layers a lot. Basically, it's backed by
 
 4. tf.layers
 
-As its name is self explained, this is the package for defining layers. We can think of it as an official version of tf.contrib.layers. They basically do the same job: to make defining layers less tiresome. To create a fully-connected layer like we did above, we now need only one line:
+As its name is self explained, this is the package for defining layers. We can think of it as an official version of tf.contrib.layers. They basically do the same job: to make defining layers less tiresome. Using tf.contrib.layers or tf.layers to create a conv2d layer like we did above, we now need only one line:
 
 ```Python
-output = tf.layers.dense(inputs, units=out_size, name='fc_layer')
+output = tf.contrib.layers.conv2d(inputs, 64, [5, 5],
+                                  weights_initializer=tf.glorot_normal_initializer)
 ```
 
-5. tf.keras
+Or with tf.layers:
+
+```Python
+output = tf.layers.conv2d(inputs, 64, [5, 5],
+                          padding='same',
+                          kernel_initializer=tf.glorot_normal_initializer)
+```
+
+I bet you wouldn't create any layers by hand from now on!
+
+5. tf.contrib.slim (or TF-Slim)
+
+Okay, this may be the most confusing one. At first, I thought that was the light-weight version of Tensorflow but soon enough, I realized I was wrong. **slim** only stands for fewer lines to do the same thing (comparing with low-level API). For example, to create not only one, but three conv2d layers, we only need to write one line:
+
+```Python
+slim = tf.contrib.slim
+output = slim.repeat(inputs, 3, slim.conv2d, 64, [5, 5])
+```
+
+Other than that though, tf.slim can help you build an entire pipeline for training the network, which means they have some functions to help you get the losses, train or evaluate the model, etc.
+
+Overall, TF-Slim may be a good option for fast experimenting new idea (Tensorflow's research uses TF-Slim for building the networks). What you need to take into account is, TF-Slim's codes actually came from tf.contrib (e.g. slim.conv2d is just an alias for tf.contrib.layers.conv2d), so there's no magic here.
+
+6. tf.keras
 
 This is legend! Keras came out when we had to write everything using low-level API. So technically it was used as the high-level API for Tensorflow. In my opinion, it did help make the community (especially researchers) adopt Tensorflow. And since Keras is officially a package of Tensorflow (from version 1.0 I think), you don't have to worry about version compatibility any more.
 
@@ -64,10 +92,6 @@ model.compile(loss='categorical_crossentropy', optimizer=SGD())
 # Train
 model.fit(x=inputs, y=labels)
 ```
-
-6. tf.slim
-
-Okay, this may be the most confusing one. At first, I thought that was the light-weight version of Tensorflow.
 
 7. tf.estimator
 
