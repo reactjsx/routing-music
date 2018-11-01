@@ -1,10 +1,20 @@
 Some of my collegues, as well as many of my readers told me that they had problems using Tensorflow for their projects. Something like this:
 
-> Hey Trung, what is the difference between tf.contrib.layers and tf.layers? Oh, and what is the tf.slim thing? And now we have the godd*** tf.estimator. What are all these for? What are we supposed to use?
+> Hey Trung, what is the difference between tf.contrib.layers and tf.layers? Oh, and what is the TF-Slim thing? And now we have the godd*** tf.estimator. What are all these for? What are we supposed to use?
 
 To be honest, when I started using Tensorflow, I was in that situation too. Tensorflow was already pretty bulky back then, and to make things even worse, it just kept getting bigger and bigger. If you don't believe me, just look at the size of the installation file and compare it with previous versions.
 
-So, I think I should create a series of blog posts about it :D
+But then, I suddenly got an idea. Why not create a series of blog posts about Tensorflow ;)
+
+### Objectives
+Let's talk about what we're gonna focus on in this post. I learned this thing the hardest way, guys. I think I will make a post about what I learned from writing technical blog posts, and one of them is: do talk about the objectives first!
+
+So, here's what we will do in this post:
+- Address some confusing problems of Tensorflow
+- Understand the mostly used Tensorflow modules
+- (Optional) Get out hands dirty with some easy code!
+
+Okay, let's tackle them one by one!
 
 ### Common Problems
 Before diving in the details, I think I should list out the most common problems that we might face when using Tensorflow:
@@ -102,15 +112,116 @@ As I mentioned earlier, when implementing in Tensorflow, you must first define a
 So Eager Execution came out to help deal with these problems. The name is kind of weird though. I interprete it as "can't wait to execute". With the additional 2 new lines, you can now do something like: evaluate the new created variable (which is trivial but used to be impossible in Tensorflow):
 
 ```Python
-> tf.enable_eager_execution()
-> tf.executing_eagerly()
-> import tensorflow.contrib.eager as tfe
+tf.enable_eager_execution()
+tf.executing_eagerly()
+import tensorflow.contrib.eager as tfe
 
-> weights = tfe.Variable(tf.truncated_normal(shape=[2, 3], stddev=5e-2), name='weights')
-> weights
+weights = tfe.Variable(tf.truncated_normal(shape=[2, 3], stddev=5e-2), name='weights')
+weights
 <tf.Variable 'weights:0' shape=(2, 3) dtype=float32, numpy=
 array([[ 0.06691323, -0.01890625, -0.00283119],
        [-0.0536754 ,  0.00109388, -0.04310168]], dtype=float32)>
 ```
 
-Rumor has it Eager Execution is gonna be default from Tensorflow 2.0. I think this move will please a lot of Tensorflow fans out there. But please bear in mind that at the moment, not everything is gonna work in Eager Execution mode (yet). So while we're waiting for Tensorflow 2.0 to be released, it's a good idea to stay updated to the latest news from Tensorflow's team and Google.
+Rumor has it Eager Execution is gonna be set to default from Tensorflow 2.0. I think this move will please a lot of Tensorflow fans out there. But please bear in mind that at the moment, not everything is gonna work in Eager Execution mode (yet). So while we're waiting for Tensorflow 2.0 to be released, it's a good idea to stay updated to the latest news from Tensorflow's team and Google.
+
+### (Optional) Let's play with Tensors!
+Okay guys, this is an optional section. We're gonna see if different approaches produce exactly the same results. We're gonna create a "real" convolution2d layer, including activation functions and regularization terms, by using tf.contrib and tf.layers. We will check the similarity among their results by checking the variables and operations that they created.
+
+1. tf.contrib
+
+Let's start with tf.contrib. I don't want to think of the amount of work to achieve the same result by using low-level API. That's why having any kinds of high-level API will save us a ton of time and effort. Not only researchers, developers do love high-level APIs!
+
+```Python
+# The inputs we use is one image of shape (224, 224, 3)
+inputs = tf.placeholder(tf.float32, [1, 224, 224, 3])
+
+conv2d = tf.contrib.layers.conv2d(inputs=inputs,
+                                  num_outputs=64,
+                                  kernel_size=3,
+                                  stride=1, 
+                                  padding='SAME', 
+                                  activation_fn=tf.nn.relu,
+                                  weights_initializer=tf.initializers.truncated_normal(stddev=0.01),
+                                  weights_regularizer=tf.contrib.layers.l2_regularizer(0.005),
+                                  biases_initializer=tf.zeros_initializer())
+```
+2. tf.layers
+
+Next, let's see how we can create a convolution2d layer with tf.layers, an official modules by the core team of Tensorflow ;) Obviously we at least expect that it can produce the same result, with less or similar or effort.
+
+```Python
+conv2d = tf.layers.conv2d(inputs=inputs,
+                          filters=64,
+                          kernel_size=3,
+                          strides=1,
+                          padding='same',
+                          activation=tf.nn.relu,
+                          kernel_initializer=tf.initializers.truncated_normal(stddev=0.01),
+                          kernel_regularizer=tf.contrib.layers.l2_regularizer(0.005),
+                          bias_initializer=tf.zeros_initializer())
+```
+
+It's time to compare the results. Did both of tf.contrib and tf.layers produce the layers with similar functionality? Did one of them do more than the other?
+
+First, let's consider the variables created by above commands. (You can use the method tf.global_variables() to get all variables in the current graph)
+
+```Python
+# Variables created by tf.contrib.layers.conv2d
+[<tf.Variable 'Conv/weights:0' shape=(3, 3, 3, 64) dtype=float32_ref>, <tf.Variable 'Conv/biases:0' shape=(64,) dtype=float32_ref>]
+
+# Variables created by tf.contrib.layers.conv2d
+[<tf.Variable 'conv2d_1/kernel:0' shape=(3, 3, 3, 64) dtype=float32_ref>, <tf.Variable 'conv2d_1/bias:0' shape=(64,) dtype=float32_ref>]
+```
+Phew, the variable sets are similar. They both created a weights Tensor, and a biases Tensor with the same shape. Notice that their names are slightly different, though.
+
+Next, let's check if the two functions generated different sets of operations. (The command we can use is 
+tf.get_default_graph().get_operations())
+
+```Python
+# Operations created by tf.contrib.layers.conv2d
+<tf.Operation 'Placeholder' type=Placeholder>, 
+<tf.Operation 'Conv/weights/Initializer/truncated_normal/shape' type=Const>, 
+<tf.Operation 'Conv/weights/Initializer/truncated_normal/mean' type=Const>, 
+<tf.Operation 'Conv/weights/Initializer/truncated_normal/stddev' type=Const>, 
+<tf.Operation 'Conv/weights/Initializer/truncated_normal/TruncatedNormal' type=TruncatedNormal>, 
+<tf.Operation 'Conv/weights/Initializer/truncated_normal/mul' type=Mul>, 
+<tf.Operation 'Conv/weights/Initializer/truncated_normal' type=Add>, 
+<tf.Operation 'Conv/weights' type=VariableV2>, 
+<tf.Operation 'Conv/weights/Assign' type=Assign>, 
+<tf.Operation 'Conv/weights/read' type=Identity>, 
+<tf.Operation 'Conv/kernel/Regularizer/l2_regularizer/scale' type=Const>, 
+<tf.Operation 'Conv/kernel/Regularizer/l2_regularizer/L2Loss' type=L2Loss>, 
+<tf.Operation 'Conv/kernel/Regularizer/l2_regularizer' type=Mul>, 
+<tf.Operation 'Conv/biases/Initializer/zeros' type=Const>, 
+<tf.Operation 'Conv/biases' type=VariableV2>, 
+<tf.Operation 'Conv/biases/Assign' type=Assign>, 
+<tf.Operation 'Conv/biases/read' type=Identity>, 
+<tf.Operation 'Conv/dilation_rate' type=Const>, 
+<tf.Operation 'Conv/Conv2D' type=Conv2D>, 
+<tf.Operation 'Conv/BiasAdd' type=BiasAdd>, 
+<tf.Operation 'Conv/Relu' type=Relu>
+
+# Operations created by tf.layers.conv2d
+<tf.Operation 'Placeholder' type=Placeholder>, 
+<tf.Operation 'conv2d_1/kernel/Initializer/truncated_normal/shape' type=Const>, 
+<tf.Operation 'conv2d_1/kernel/Initializer/truncated_normal/mean' type=Const>, 
+<tf.Operation 'conv2d_1/kernel/Initializer/truncated_normal/stddev' type=Const>, 
+<tf.Operation 'conv2d_1/kernel/Initializer/truncated_normal/TruncatedNormal' type=TruncatedNormal>, 
+<tf.Operation 'conv2d_1/kernel/Initializer/truncated_normal/mul' type=Mul>, 
+<tf.Operation 'conv2d_1/kernel/Initializer/truncated_normal' type=Add>, 
+<tf.Operation 'conv2d_1/kernel' type=VariableV2>, 
+<tf.Operation 'conv2d_1/kernel/Assign' type=Assign>, 
+<tf.Operation 'conv2d_1/kernel/read' type=Identity>, 
+<tf.Operation 'conv2d_1/kernel/Regularizer/l2_regularizer/scale' type=Const>, 
+<tf.Operation 'conv2d_1/kernel/Regularizer/l2_regularizer/L2Loss' type=L2Loss>, 
+<tf.Operation 'conv2d_1/kernel/Regularizer/l2_regularizer' type=Mul>, 
+<tf.Operation 'conv2d_1/bias/Initializer/zeros' type=Const>, 
+<tf.Operation 'conv2d_1/bias' type=VariableV2>, 
+<tf.Operation 'conv2d_1/bias/Assign' type=Assign>, 
+<tf.Operation 'conv2d_1/bias/read' type=Identity>, 
+<tf.Operation 'conv2d_1/dilation_rate' type=Const>, 
+<tf.Operation 'conv2d_1/Conv2D' type=Conv2D>, 
+<tf.Operation 'conv2d_1/BiasAdd' type=BiasAdd>, 
+<tf.Operation 'conv2d_1/Relu' type=Relu>
+```
