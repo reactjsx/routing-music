@@ -26,8 +26,6 @@ Whether it comes to importing data, creating the model or visualizing the result
 
 I think this is the problem that a lot of you guys can relate to. In Tensorflow, we must first define the computation graph. Not only doing this way prevents us from modifying the graph when it's running (sometimes we just want it to be dynamic), but it also does a good job at hiding things from us, which we can't know what the hell under the hood is causing the trouble. We are the Python guys, we want things to be Pythonic!
 
-(Talk about Eager Execution here)
-
 ### Tensorflow's Vocabulary
 As I said above, one problem with Tensorflow is that there are a lot of ways to do the exact same thing. Even experienced users find it confusing sometimes.
 
@@ -128,6 +126,8 @@ Rumor has it Eager Execution is gonna be set to default from Tensorflow 2.0. I t
 ### (Optional) Let's play with Tensors!
 Okay guys, this is an optional section. We're gonna see if different approaches produce exactly the same results. We're gonna create a "real" convolution2d layer, including activation functions and regularization terms, by using tf.contrib and tf.layers. We will check the similarity among their results by checking the variables and operations that they created.
 
+Oh hold on! There's one more thing I want you to pay attention to. I will write out all the arguments whether some of them have default values. The reason is, the two modules' conv2d functions set the default values differently for the same terms! For example, padding is set to 'SAME' by default in tf.contrib.layers.conv2d, but 'valid' in case of tf.layers.conv2d. Now we're ready to move on.
+
 1. tf.contrib
 
 Let's start with tf.contrib. I don't want to think of the amount of work to achieve the same result by using low-level API. That's why having any kinds of high-level API will save us a ton of time and effort. Not only researchers, developers do love high-level APIs!
@@ -225,3 +225,5 @@ tf.get_default_graph().get_operations())
 <tf.Operation 'conv2d_1/BiasAdd' type=BiasAdd>, 
 <tf.Operation 'conv2d_1/Relu' type=Relu>
 ```
+
+Now, what is the verdict? As we can observe above. Using tf.contrib or tf.layers will save us a lot of time and prevent us from headache later on. Moreover, they create absolutely similar things. What does that mean to us? It means that it doesn't matter what your preferred module is, you can create/re-create any networks or you can even use the weights trained by the code written on the other module. Okay, you might notice that the names of variables and operations are not the same. 
