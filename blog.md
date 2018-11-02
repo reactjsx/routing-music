@@ -226,4 +226,18 @@ tf.get_default_graph().get_operations())
 <tf.Operation 'conv2d_1/Relu' type=Relu>
 ```
 
-Now, what is the verdict? As we can observe above. Using tf.contrib or tf.layers will save us a lot of time and prevent us from headache later on. Moreover, they create absolutely similar things. What does that mean to us? It means that it doesn't matter what your preferred module is, you can create/re-create any networks or you can even use the weights trained by the code written on the other module. Okay, you might notice that the names of variables and operations are not the same. 
+Now, what is the verdict? As we can observe above. Using tf.contrib or tf.layers will save us a lot of time and prevent us from headache later on. Moreover, they create absolutely similar things. What does that mean to us? It means that it doesn't matter what your preferred module is, you can create/re-create any networks or you can even use the weights trained by the code written on the other module.
+
+But hey, you can't see that the names are obviously different, can you? You might ask. As long as the shapes and types of variables are the same, mapping the names between the two variable sets is not that painful task. In fact, it's just no more than 5 lines of code and yeah, you only need to know how to do it. As we addressed the problems earlier in this post, Tensorflow is not hard, it is just kind of confusing.
+
+### Conclusion
+Oh, that was so long. Thank you guys for reading. Before we say goodbye, let's take a look at what we did in this post:
+- We discussed why Tensorflow may seem confusing
+- We talked about heavily in-use Tensorflow module
+- We checked if different modules produce different results on the same task
+
+This post is no more than an entry point, some kind of what-I-would-talk-about-when-I-talk-about-Tensorflow (I borrowed that title from Haruki Murakami, check it [here](https://www.amazon.com/What-About-Running-Vintage-International-ebook/dp/B0015DWJ8W).
+
+Personally, I am a big fan of learning-by-doing style. Even in the deep-learning field which seems way to deeply academic, it can work out well. In the future posts, I will guide you through how we can accomplish the most common tasks with Tensorflow. Those won't make you a deep learning guru, but with a solid understanding about how to use the proper tool, and with some practice from your own, what can stop you from building amazing things?
+
+Okay, I might have exaggerated a little bit, but honestly I hope that I can make something that you guys can benefit from. So, I'm gonna see you soon, in the next blog post of this Tensorflow series.
